@@ -1,8 +1,11 @@
 const question = document.getElementById("question");
 const choices = Array.from(document.getElementsByClassName("choice-text"));
+const progressText = document.getElementById("progressText");
+const scoreText = document.getElementById("score");
+const progressBarFull = document.getElementById("progressBarFull");
 
 let currentQuestion = {};
-let acceptingAnswers = true;
+let acceptingAnswers = false;
 let score = 0;
 let questionCounter = 0;
 let availableQuestions = [];
@@ -48,15 +51,75 @@ startGame = () => {
 };
 
 getNewQuestion = () => {
+  if (availableQuestions.length === 0 || questionCounter >= MAX_QUESTIONS) {
+    // go to the end page
+    return window.location.assign("/end.html");
+  }
+
   questionCounter++;
+  progressText.innerText = `Question ${questionCounter}/${MAX_QUESTIONS}`;
+
+  //UPDATE Progress Bar
+  progressBarFull.style.width =`${(questionCounter/MAX_QUESTIONS) * 100}%`
+
   const questionIndex = Math.floor(Math.random() * availableQuestions.length);
   currentQuestion = availableQuestions[questionIndex];
   question.innerText = currentQuestion.question;
 
-  choices.forEach(choice => {
+  choices.forEach((choice) => {
     const number = choice.dataset["number"];
-    choice.innerText =currentQuestion["choice" + number];
-  })
+    choice.innerText = currentQuestion["choice" + number];
+  });
+
+  availableQuestions.splice(questionIndex, 1);
+  acceptingAnswers = true;
+};
+choices.forEach((choice) => {
+  choice.addEventListener("click", (e) => {
+    if (!acceptingAnswers) return;
+
+    acceptingAnswers = false;
+    const selectedChoice = e.target;
+    const selectedAnswer = selectedChoice.dataset["number"];
+
+    // Another way to write the tenary operator below
+    // const classToApply = "incorrect";
+
+    // if(selectedAnswer == currentQuestion.answer){
+    //   classToApply = "correct";
+    // }
+
+    const classToApply =
+      // this is a tenary operator that says if currentQuestion answer is true then assign "correct" else assign "incorrect"
+      selectedAnswer == currentQuestion.answer ? "correct" : "incorrect";
+
+    //this functionn is what is called to implement the function INCREMENTsCORE BELOW
+
+    if (classToApply === "correct") {
+      incrementScore(CORRECT_BONUS);
+    }
+
+    // this is how to apply classes in javascript
+    selectedChoice.parentElement.classList.add(classToApply);
+
+    setTimeout(() => {
+      selectedChoice.parentElement.classList.remove(classToApply);
+      getNewQuestion();
+    }, 1000);
+
+    // this is how to remove applied classes in javascript
+    // selectedChoice.parentElement.classList.remove(classToApply);
+
+    // console.log(classToApply);
+    // console.log(selectedAnswer == currentQuestion.answer);
+    // getNewQuestion();
+  });
+});
+
+//to increment the score num in the first line specifies the parameter its going to take
+incrementScore = (num) => {
+  score += num;
+  scoreText.innerText = score;
 };
 
 startGame();
